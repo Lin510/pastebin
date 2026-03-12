@@ -12,6 +12,20 @@
 - Toate colecțiile vor avea prefixul `pastebin_` (ex: `pastebin_pastes`)
 - **Nu** se creează baze de date noi, totul merge în db-ul configurat în `MONGODB_URI`
 
+## Next.js 16 — convenții specifice (breaking changes față de 15)
+- **`src/proxy.ts`** — înlocuiește `middleware.ts` din Next.js 15. Export-ul se numește `proxy`, nu `middleware`
+- `params` în pages/route handlers sunt `Promise<{...}>` (async) — neschimbat față de 15.x
+- `cookies()` din `next/headers` este async — neschimbat față de 15.x
+
+```ts
+// CORECT în Next.js 16
+export async function proxy(request: NextRequest) { ... }
+export const config = { matcher: ['/admin/:path*'] };
+
+// GREȘIT (Next.js 15 și mai vechi)
+export async function middleware(request: NextRequest) { ... }
+```
+
 ## Structura proiect
 ```
 src/
@@ -38,7 +52,7 @@ src/
     auth.ts                   # JWT helpers
   models/
     Paste.ts                  # Mongoose model cu prefix pastebin_
-  middleware.ts               # Protejare rute /admin/* (exceptând /admin/login)
+  proxy.ts                    # Protejare rute /admin/* (exceptând /admin/login)
 ```
 
 ## Reguli importante
