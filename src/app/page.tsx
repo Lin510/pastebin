@@ -50,7 +50,10 @@ export default function Home() {
   const [showPassword, setShowPassword] = useState(false);
   const [useProtect, setUseProtect] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [loadingMsg, setLoadingMsg] = useState("");
   const [error, setError] = useState("");
+
+  const CHUNK_SIZE = 1_000_000;
 
   async function handleSubmit() {
     setError("");
@@ -62,24 +65,50 @@ export default function Home() {
 
     setLoading(true);
     try {
-      const res = await fetch("/api/paste", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, content, language, expiry, password: useProtect && password ? password : undefined }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error ?? "Eroare la creare paste.");
-        return;
+      const chunks: string[] = [];
+      for (let i = 0; i < content.length; i += CHUNK_SIZE) {
+        chunks.push(content.slice(i, i + CHUNK_SIZE));
       }
 
-      router.push(`/${data.id}`);
+      const groupId = chunks.length > 1 ? crypto.randomUUID() : null;
+      const totalParts = chunks.length > 1 ? chunks.length : null;
+      let firstId: string | null = null;
+
+      for (let i = 0; i < chunks.length; i++) {
+        if (chunks.length > 1) setLoadingMsg(`Se creează partea ${i + 1}/${chunks.length}...`);
+        else setLoadingMsg("Se creează...");
+
+        const res = await fetch("/api/paste", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: chunks.length > 1 ? `${title} (${i + 1}/${chunks.length})` : title,
+            content: chunks[i],
+            language,
+            expiry,
+            password: useProtect && password ? password : undefined,
+            groupId,
+            partIndex: groupId !== null ? i : null,
+            totalParts,
+          }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          setError(data.error ?? "Eroare la creare paste.");
+          return;
+        }
+
+        if (i === 0) firstId = data.id as string;
+      }
+
+      router.push(`/${firstId}`);
     } catch {
       setError("Eroare de rețea. Încearcă din nou.");
     } finally {
       setLoading(false);
+      setLoadingMsg("");
     }
   }
 
@@ -122,7 +151,12 @@ export default function Home() {
             required
           />
           <p className="text-xs text-gray-400 dark:text-gray-600 mt-1 text-right">
-            {content.length.toLocaleString()} / 500.000 caractere
+            {content.length.toLocaleString()} caractere
+            {content.length > 1_000_000 && (
+              <span className="ml-2 text-amber-500 dark:text-amber-400">
+                → {Math.ceil(content.length / 1_000_000)} părți
+              </span>
+            )}
           </p>
         </div>
 
@@ -216,7 +250,7 @@ export default function Home() {
           disabled={loading}
           className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-400 disabled:cursor-not-allowed text-white font-semibold px-8 py-2.5 rounded-lg transition-colors"
         >
-          {loading ? "Se creează..." : "Creează Paste"}
+          {loading ? (loadingMsg || "Se creează...") : "Creează Paste"}
         </button>
       </form>
     </div>

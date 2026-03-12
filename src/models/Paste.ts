@@ -8,6 +8,9 @@ export interface IPaste extends Document {
   language: string;
   passwordHash: string | null;
   expiresAt: Date | null;
+  groupId: string | null;
+  partIndex: number | null;
+  totalParts: number | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -28,7 +31,7 @@ const PasteSchema = new Schema<IPaste>(
     content: {
       type: String,
       required: true,
-      maxlength: 500_000,
+      maxlength: 1_100_000,
     },
     language: {
       type: String,
@@ -37,6 +40,19 @@ const PasteSchema = new Schema<IPaste>(
     },
     passwordHash: {
       type: String,
+      default: null,
+    },
+    groupId: {
+      type: String,
+      default: null,
+      index: { sparse: true },
+    },
+    partIndex: {
+      type: Number,
+      default: null,
+    },
+    totalParts: {
+      type: Number,
       default: null,
     },
     expiresAt: {

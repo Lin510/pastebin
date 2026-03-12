@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useTheme } from "next-themes";
 import hljs from "highlight.js";
-import { Check, Clock, Copy, FileText, Link2, Plus } from "lucide-react";
+import { Check, Clock, ChevronLeft, ChevronRight, Copy, FileText, Link2, Plus } from "lucide-react";
 
 interface Props {
   id: string;
@@ -12,6 +13,10 @@ interface Props {
   language: string;
   createdAt: string;
   expiresAt: string | null;
+  partIndex: number | null;
+  totalParts: number | null;
+  prevId: string | null;
+  nextId: string | null;
 }
 
 function formatDate(iso: string) {
@@ -24,7 +29,7 @@ function formatDate(iso: string) {
   });
 }
 
-export default function PasteViewer({ id, title, content, language, createdAt, expiresAt }: Props) {
+export default function PasteViewer({ id, title, content, language, createdAt, expiresAt, partIndex, totalParts, prevId, nextId }: Props) {
   const codeRef = useRef<HTMLElement>(null);
   const [copied, setCopied] = useState(false);
   const { resolvedTheme } = useTheme();
@@ -52,7 +57,7 @@ export default function PasteViewer({ id, title, content, language, createdAt, e
     if (codeRef.current) {
       delete codeRef.current.dataset.highlighted;
       codeRef.current.textContent = content;
-      if (language !== "plaintext") {
+      if (language !== "plaintext" && content.length < 100_000) {
         hljs.highlightElement(codeRef.current);
       }
     }
@@ -74,6 +79,36 @@ export default function PasteViewer({ id, title, content, language, createdAt, e
 
   return (
     <div className="max-w-4xl mx-auto">
+      {/* Part navigation */}
+      {totalParts && totalParts > 1 && (
+        <div className="flex items-center justify-between mb-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-lg px-4 py-2 text-sm">
+          <a
+            href={prevId ? `/${prevId}` : undefined}
+            aria-disabled={!prevId}
+            className={`flex items-center gap-1 font-medium transition-colors ${
+              prevId
+                ? "text-amber-700 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-200"
+                : "text-amber-300 dark:text-amber-700 pointer-events-none"
+            }`}
+          >
+            <ChevronLeft size={16} /> Anterioară
+          </a>
+          <span className="text-amber-700 dark:text-amber-400 font-medium">
+            Partea {(partIndex ?? 0) + 1} din {totalParts}
+          </span>
+          <a
+            href={nextId ? `/${nextId}` : undefined}
+            aria-disabled={!nextId}
+            className={`flex items-center gap-1 font-medium transition-colors ${
+              nextId
+                ? "text-amber-700 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-200"
+                : "text-amber-300 dark:text-amber-700 pointer-events-none"
+            }`}
+          >
+            Următoare <ChevronRight size={16} />
+          </a>
+        </div>
+      )}
       {/* Header */}
       <div className="mb-4 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div>
@@ -113,13 +148,13 @@ export default function PasteViewer({ id, title, content, language, createdAt, e
             <FileText size={13} />
             Raw
           </a>
-          <a
+          <Link
             href="/"
             className="flex items-center gap-1.5 text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg transition-colors"
           >
             <Plus size={13} />
             Paste nou
-          </a>
+          </Link>
         </div>
       </div>
 
@@ -129,7 +164,7 @@ export default function PasteViewer({ id, title, content, language, createdAt, e
           <span className="text-xs text-gray-400 dark:text-gray-500 font-mono">{id}</span>
           <span className="text-xs text-gray-400 dark:text-gray-600">{content.length.toLocaleString()} caractere</span>
         </div>
-        <pre className="overflow-auto text-sm leading-relaxed max-h-[75vh]">
+        <pre className="overflow-y-auto overflow-x-hidden text-sm leading-relaxed max-h-[75vh] whitespace-pre-wrap break-words">
           <code ref={codeRef} className={`language-${language} hljs`} />
         </pre>
       </div>

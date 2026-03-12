@@ -54,6 +54,10 @@ export default function PasswordGate({ meta }: { meta: PasteMeta }) {
         language={paste.language}
         createdAt={paste.createdAt}
         expiresAt={paste.expiresAt}
+        partIndex={null}
+        totalParts={null}
+        prevId={null}
+        nextId={null}
       />
     );
   }

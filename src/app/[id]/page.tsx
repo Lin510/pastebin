@@ -47,6 +47,22 @@ export default async function PastePage({ params }: PageProps) {
     );
   }
 
+  let prevId: string | null = null;
+  let nextId: string | null = null;
+
+  if (paste.groupId && paste.partIndex !== null && paste.totalParts !== null) {
+    const [prev, next] = await Promise.all([
+      paste.partIndex > 0
+        ? Paste.findOne({ groupId: paste.groupId, partIndex: paste.partIndex - 1 }).lean()
+        : null,
+      paste.partIndex < paste.totalParts - 1
+        ? Paste.findOne({ groupId: paste.groupId, partIndex: paste.partIndex + 1 }).lean()
+        : null,
+    ]);
+    prevId = prev?.pasteId ?? null;
+    nextId = next?.pasteId ?? null;
+  }
+
   return (
     <PasteViewer
       id={paste.pasteId}
@@ -55,6 +71,10 @@ export default async function PastePage({ params }: PageProps) {
       language={paste.language ?? "plaintext"}
       createdAt={paste.createdAt?.toISOString() ?? ""}
       expiresAt={paste.expiresAt?.toISOString() ?? null}
+      partIndex={paste.partIndex ?? null}
+      totalParts={paste.totalParts ?? null}
+      prevId={prevId}
+      nextId={nextId}
     />
   );
 }

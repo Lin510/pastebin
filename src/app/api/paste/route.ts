@@ -22,14 +22,14 @@ const EXPIRY_OPTIONS: Record<string, number> = {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { title, content, language, expiry, password } = body;
+    const { title, content, language, expiry, password, groupId, partIndex, totalParts } = body;
 
     if (!content || typeof content !== 'string') {
       return NextResponse.json({ error: 'Conținutul este obligatoriu' }, { status: 400 });
     }
 
-    if (content.length > 500_000) {
-      return NextResponse.json({ error: 'Conținutul depășește limita de 500KB' }, { status: 400 });
+    if (content.length > 1_050_000) {
+      return NextResponse.json({ error: 'Conținutul depășește limita de 1MB per parte' }, { status: 400 });
     }
 
     const sanitizedLanguage =
@@ -64,10 +64,14 @@ export async function POST(request: NextRequest) {
       language: sanitizedLanguage,
       passwordHash,
       expiresAt,
+      groupId: typeof groupId === 'string' && groupId.length <= 40 ? groupId : null,
+      partIndex: typeof partIndex === 'number' && partIndex >= 0 ? partIndex : null,
+      totalParts: typeof totalParts === 'number' && totalParts >= 1 ? totalParts : null,
     });
 
     return NextResponse.json({ id: paste.pasteId }, { status: 201 });
-  } catch {
+  } catch (err) {
+    console.error('[POST /api/paste]', err);
     return NextResponse.json({ error: 'Eroare internă server' }, { status: 500 });
   }
 }
