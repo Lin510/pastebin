@@ -1,36 +1,105 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 📋 PasteBin Personal
 
-## Getting Started
+> Serviciu personal de partajare cod și text — self-hosted, fără listă publică, cu syntax highlighting și panou de administrare securizat.
 
-First, run the development server:
+Built with **Next.js 16**, **MongoDB Atlas**, **Tailwind CSS v4**, **highlight.js**.
+
+---
+
+## Funcționalități
+
+- **Creare paste** — titlu opțional, limbaj selectabil (23 limbaje), expirare configurabilă (10 min → 30 zile → niciodată)
+- **Vizualizare** — syntax highlighting prin highlight.js (tema dark), copiere cu un click, link direct
+- **Fără listă publică** — paste-urile sunt accesibile doar prin link direct (ID nanoid de 8 caractere)
+- **Admin panel** — autentificat cu JWT în cookie httpOnly, listare paginată, ștergere paste
+- **Expirare automată** — TTL index MongoDB șterge paste-urile expirate automat
+- **Securitate** — parolă hash-uită cu bcrypt, JWT cu `jose` (Edge-compatible), validare input server-side, XSS safe
+
+## Stack tehnic
+
+| | |
+|---|---|
+| Framework | Next.js 16 (App Router, TypeScript) |
+| Styling | Tailwind CSS v4 |
+| Database | MongoDB Atlas via Mongoose |
+| Auth | JWT (jose) + bcrypt, httpOnly cookie |
+| Syntax highlight | highlight.js |
+| ID-uri | nanoid (8 chars) |
+
+## Setup
+
+### 1. Clonare și instalare
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/USER/paste-bin.git
+cd paste-bin
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Variabile de mediu
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+cp .env.example .env.local
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Completează `.env.local`:
 
-## Learn More
+```env
+MONGODB_URI=mongodb+srv://...
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD_HASH=$2b$10$...
+JWT_SECRET=string_random_minim_32_chars
+NEXT_PUBLIC_BASE_URL=http://localhost:3000
+```
 
-To learn more about Next.js, take a look at the following resources:
+### 3. Generare hash parolă admin
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+node scripts/hash-password.mjs PAROLA_TA
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Copiază hash-ul rezultat în `ADMIN_PASSWORD_HASH`.
 
-## Deploy on Vercel
+### 4. Pornire
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm run dev      # development
+npm run build    # production build
+npm start        # production server
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Structură
+
+```
+src/
+├── app/
+│   ├── page.tsx              # Home — creare paste
+│   ├── [id]/page.tsx         # Vizualizare paste
+│   ├── admin/
+│   │   ├── page.tsx          # Dashboard admin
+│   │   └── login/page.tsx    # Login admin
+│   └── api/
+│       ├── paste/route.ts           # POST creare
+│       ├── paste/[id]/route.ts      # GET citire
+│       └── admin/
+│           ├── login/route.ts       # POST login
+│           ├── logout/route.ts      # POST logout
+│           ├── pastes/route.ts      # GET list (auth)
+│           └── paste/[id]/route.ts  # DELETE (auth)
+├── lib/
+│   ├── mongodb.ts            # Conexiune MongoDB singleton
+│   └── auth.ts               # JWT helpers
+├── models/
+│   └── Paste.ts              # Schema Mongoose (pastebin_pastes)
+└── middleware.ts             # Protecție rute /admin/*
+```
+
+## Securitate
+
+- Nicio listă publică de paste-uri
+- Parola adminului niciodată în plain text
+- Cookie `httpOnly` + `sameSite: lax` + `secure` în producție
+- Validare și sanitizare input pe server
+- ID-uri opace (nanoid), nu ObjectId MongoDB
+- Middleware Next.js verifică JWT pe Edge runtime
+
