@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useTheme } from "next-themes";
 import hljs from "highlight.js";
-import { Check, Clock, Copy, Link2, Plus } from "lucide-react";
+import { Check, Clock, Copy, FileText, Link2, Plus } from "lucide-react";
 
 interface Props {
   id: string;
@@ -104,6 +104,15 @@ export default function PasteViewer({ id, title, content, language, createdAt, e
             <Copy size={13} />
             Copiază cod
           </button>
+          <a
+            href={`/${id}/raw`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 text-xs bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 px-3 py-1.5 rounded-lg transition-colors"
+          >
+            <FileText size={13} />
+            Raw
+          </a>
           <a
             href="/"
             className="flex items-center gap-1.5 text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg transition-colors"
