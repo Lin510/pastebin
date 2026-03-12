@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { nanoid } from 'nanoid';
+import bcrypt from 'bcryptjs';
 import { connectDB } from '@/lib/mongodb';
 import Paste from '@/models/Paste';
 
@@ -21,7 +22,7 @@ const EXPIRY_OPTIONS: Record<string, number> = {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { title, content, language, expiry } = body;
+    const { title, content, language, expiry, password } = body;
 
     if (!content || typeof content !== 'string') {
       return NextResponse.json({ error: 'Conținutul este obligatoriu' }, { status: 400 });
@@ -44,6 +45,14 @@ export async function POST(request: NextRequest) {
       expiresAt = new Date(Date.now() + EXPIRY_OPTIONS[expiry]);
     }
 
+    let passwordHash: string | null = null;
+    if (typeof password === 'string' && password.length > 0) {
+      if (password.length > 200) {
+        return NextResponse.json({ error: 'Parola e prea lungă' }, { status: 400 });
+      }
+      passwordHash = await bcrypt.hash(password, 10);
+    }
+
     await connectDB();
 
     const pasteId = nanoid(8);
@@ -53,6 +62,7 @@ export async function POST(request: NextRequest) {
       title: sanitizedTitle,
       content,
       language: sanitizedLanguage,
+      passwordHash,
       expiresAt,
     });
 

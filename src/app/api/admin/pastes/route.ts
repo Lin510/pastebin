@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
-        .select('pasteId title language expiresAt createdAt')
+        .select('pasteId title language expiresAt createdAt passwordHash')
         .lean(),
       Paste.countDocuments(),
     ]);

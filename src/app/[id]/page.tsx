@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { connectDB } from "@/lib/mongodb";
 import Paste from "@/models/Paste";
 import PasteViewer from "./PasteViewer";
+import PasswordGate from "./PasswordGate";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -29,6 +30,20 @@ export default async function PastePage({ params }: PageProps) {
           ← Creează un paste nou
         </a>
       </div>
+    );
+  }
+
+  if (paste.passwordHash) {
+    return (
+      <PasswordGate
+        meta={{
+          id: paste.pasteId,
+          title: paste.title ?? "",
+          language: paste.language ?? "plaintext",
+          createdAt: paste.createdAt?.toISOString() ?? "",
+          expiresAt: paste.expiresAt?.toISOString() ?? null,
+        }}
+      />
     );
   }
 

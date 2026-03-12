@@ -2,10 +2,11 @@ import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export interface IPaste extends Document {
   _id: mongoose.Types.ObjectId;
-  pasteId: string;       // nanoid 8 chars — ID public expus
+  pasteId: string;
   title: string;
   content: string;
   language: string;
+  passwordHash: string | null;
   expiresAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
@@ -33,6 +34,10 @@ const PasteSchema = new Schema<IPaste>(
       type: String,
       default: 'plaintext',
       maxlength: 50,
+    },
+    passwordHash: {
+      type: String,
+      default: null,
     },
     expiresAt: {
       type: Date,

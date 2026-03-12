@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Eye, EyeOff, Lock } from "lucide-react";
+import { LanguageSelect, type LangOption } from "@/components/LanguageSelect";
 
-const LANGUAGES = [
+const LANGUAGES: LangOption[] = [
   { value: "plaintext", label: "Plain Text" },
   { value: "javascript", label: "JavaScript" },
   { value: "typescript", label: "TypeScript" },
@@ -44,11 +46,13 @@ export default function Home() {
   const [content, setContent] = useState("");
   const [language, setLanguage] = useState("plaintext");
   const [expiry, setExpiry] = useState("never");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [useProtect, setUseProtect] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleSubmit() {
     setError("");
 
     if (!content.trim()) {
@@ -61,7 +65,7 @@ export default function Home() {
       const res = await fetch("/api/paste", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, content, language, expiry }),
+        body: JSON.stringify({ title, content, language, expiry, password: useProtect && password ? password : undefined }),
       });
 
       const data = await res.json();
@@ -82,17 +86,17 @@ export default function Home() {
   return (
     <div className="max-w-3xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-white mb-1">Paste nou</h1>
-        <p className="text-gray-400 text-sm">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Paste nou</h1>
+        <p className="text-gray-500 dark:text-gray-400 text-sm">
           Partajează cod sau text printr-un link unic.
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={(e) => { e.preventDefault(); void handleSubmit(); }} className="space-y-4">
         {/* Titlu */}
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-1">
-            Titlu <span className="text-gray-500">(opțional)</span>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Titlu <span className="text-gray-400 dark:text-gray-500">(opțional)</span>
           </label>
           <input
             type="text"
@@ -100,24 +104,24 @@ export default function Home() {
             onChange={(e) => setTitle(e.target.value)}
             maxLength={200}
             placeholder="ex: Config nginx, Snippet React..."
-            className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-gray-100 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+            className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
           />
         </div>
 
         {/* Conținut */}
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-1">
-            Conținut <span className="text-red-400">*</span>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Conținut <span className="text-red-500 dark:text-red-400">*</span>
           </label>
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
             rows={16}
             placeholder="Lipește codul sau textul tău aici..."
-            className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-gray-100 placeholder-gray-600 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition resize-y"
+            className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-600 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition resize-y"
             required
           />
-          <p className="text-xs text-gray-600 mt-1 text-right">
+          <p className="text-xs text-gray-400 dark:text-gray-600 mt-1 text-right">
             {content.length.toLocaleString()} / 500.000 caractere
           </p>
         </div>
@@ -125,30 +129,24 @@ export default function Home() {
         {/* Limbaj + Expirare */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Limbaj
             </label>
-            <select
+            <LanguageSelect
+              options={LANGUAGES}
               value={language}
-              onChange={(e) => setLanguage(e.target.value)}
-              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
-            >
-              {LANGUAGES.map((l) => (
-                <option key={l.value} value={l.value}>
-                  {l.label}
-                </option>
-              ))}
-            </select>
+              onChange={setLanguage}
+            />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Expiră după
             </label>
             <select
               value={expiry}
               onChange={(e) => setExpiry(e.target.value)}
-              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+              className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
             >
               {EXPIRY_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>
@@ -159,8 +157,56 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Protejare cu parolă */}
+        <div className="flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setUseProtect((v) => {
+                if (v) { setPassword(""); setShowPassword(false); }
+                return !v;
+              });
+            }}
+            className="flex items-center gap-2.5 w-fit"
+          >
+            <span className={`relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ${
+              useProtect ? "bg-indigo-600" : "bg-gray-200 dark:bg-gray-700"
+            }`}>
+              <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform duration-200 ${
+                useProtect ? "translate-x-4" : "translate-x-0"
+              }`} />
+            </span>
+            <span className="flex items-center gap-1.5 text-sm text-gray-700 dark:text-gray-300 select-none">
+              <Lock size={14} className="text-gray-400" />
+              Protejează cu parolă
+            </span>
+          </button>
+
+          {useProtect && (
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                maxLength={200}
+                autoFocus
+                autoComplete="new-password"
+                placeholder="Parolă..."
+                className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 pr-10 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+          )}
+        </div>
+
         {error && (
-          <div className="bg-red-950 border border-red-700 text-red-300 rounded-lg px-4 py-3 text-sm">
+          <div className="bg-red-50 dark:bg-red-950 border border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 rounded-lg px-4 py-3 text-sm">
             {error}
           </div>
         )}
@@ -168,7 +214,7 @@ export default function Home() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-800 disabled:cursor-not-allowed text-white font-semibold px-8 py-2.5 rounded-lg transition-colors"
+          className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-400 disabled:cursor-not-allowed text-white font-semibold px-8 py-2.5 rounded-lg transition-colors"
         >
           {loading ? "Se creează..." : "Creează Paste"}
         </button>

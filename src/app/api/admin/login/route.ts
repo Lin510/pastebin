@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import bcrypt from 'bcryptjs';
 import { signAdminToken, COOKIE_NAME } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
@@ -12,10 +11,7 @@ export async function POST(request: NextRequest) {
     }
 
     const validUsername = username === process.env.ADMIN_USERNAME;
-    const validPassword = await bcrypt.compare(
-      password,
-      process.env.ADMIN_PASSWORD_HASH ?? ''
-    );
+    const validPassword = password === process.env.ADMIN_PASSWORD;
 
     if (!validUsername || !validPassword) {
       return NextResponse.json({ error: 'Credențiale incorecte' }, { status: 401 });
